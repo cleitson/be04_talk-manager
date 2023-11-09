@@ -1,4 +1,5 @@
 const express = require('express');
+require('express-async-errors');
 
 const talkerRoutes = require('./routes/talkerRoutes');
 
@@ -13,6 +14,8 @@ const PORT = process.env.PORT || '3001';
 app.get('/', (_request, response) => {
   response.status(HTTP_OK_STATUS).send();
 });
+
+app.use((error, _req, res, _next) => res.status(500).json({ error: error.message }));
 
 app.listen(PORT, () => {
   console.log('Online');
