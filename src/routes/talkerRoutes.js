@@ -1,25 +1,21 @@
 const express = require('express');
-const fs = require('fs').promises;
-const path = require('path');
+const { readFile, writeFile } = require('../utils/manipulateFile');
 const auth = require('../middlewares/auth');
 const { validateName, validateAge, validateTalk } = require('../middlewares/validateTalker');
 
 const router = express.Router();
-const arquivo = '../talker.json';
 
 router.get('/', async (_request, response) => {
-  const data = await fs.readFile(path.resolve(__dirname, arquivo));
-  const talkers = JSON.parse(data);
-
-  if (!talkers) return response.status(200).send([]);
-
+  const talkers = await readFile();
+  if (!talkers) {
+    return response.status(200).send([]);
+  }
   response.status(200).send(talkers);
 });
 
 router.get('/:id', async (request, response) => {
   const { id } = request.params;
-  const data = await fs.readFile(path.resolve(__dirname, arquivo));
-  const talkers = JSON.parse(data);
+  const talkers = await readFile();
   const filteredTalker = talkers.find((talker) => talker.id === Number(id));
 
   if (!filteredTalker) {
@@ -33,8 +29,7 @@ router.get('/:id', async (request, response) => {
 
 router.post('/', auth, validateName, validateAge, validateTalk, async (request, response) => {
   const { name, age, talk } = request.body;
-  const data = await fs.readFile(path.resolve(__dirname, arquivo));
-  const talkers = JSON.parse(data);
+  const talkers = await readFile();
   const talker = {
     id: talkers.length + 1,
     name,
@@ -42,7 +37,39 @@ router.post('/', auth, validateName, validateAge, validateTalk, async (request, 
     talk,
   };
   const newTalkers = [...talkers, talker];
-  await fs.writeFile(path.resolve(__dirname, arquivo), JSON.stringify(newTalkers)); 
+  await writeFile(newTalkers); 
   response.status(201).send(talker);
 });
+
+router.put('/:id', auth, validateName, validateAge, validateTalk, async (request, response) => {
+  const { id } = request.params;
+  const { name, age, talk } = request.body;
+  const talkers = await readFile();
+  const talkerIndex = talkers.findIndex((talker) => talker.id === Number(id));
+  if (talkerIndex === -1) {
+    return response.status(404).send({
+      message: 'Pessoa palestrante não encontrada',
+    });
+  }
+  const newTalker = {
+    id: talkers[talkerIndex].id,
+    name,
+    age,
+    talk,
+  };
+  talkers[talkerIndex] = newTalker;
+  await writeFile(talkers);
+  return response.status(200).send(newTalker);
+});
+
+router.delete('/:id', auth, async (request, response) => {
+  const { id } = request.params;
+  const talkers = await readFile();
+  const filteredTalkers = talkers.filter((talker) => talker.id !== Number(id));
+  await writeFile(filteredTalkers);
+  response.status(204).send({
+    message: 'Pessoa palestrante deletada com sucesso',
+  });
+});
+
 module.exports = router;
