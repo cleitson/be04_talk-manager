@@ -1,0 +1,81 @@
+const validateName = (req, res, next) => {
+  const { name } = req.body;
+  if (!name) {
+    return res.status(400).json({
+      message: 'O campo "name" é obrigatório',
+    });
+  }
+  if (name.length < 3) {
+    return res.status(400).json({
+      message: 'O "name" deve ter pelo menos 3 caracteres',
+    });
+  }
+  next();
+};
+
+const validateAge = (req, res, next) => {
+  const { age } = req.body;
+  if (!age) {
+    return res.status(400).json({
+      message: 'O campo "age" é obrigatório',
+    });
+  }
+  if (age < 18 || !Number.isInteger(age)) {
+    return res.status(400).json({
+      message: 'O campo "age" deve ser um número inteiro igual ou maior que 18',
+    });
+  }
+  next();
+};
+
+const validateWatchedAt = (watched) => {
+  const regexData = /^(0[1-9]|[1-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])\/\d{4}$/;
+  if (!watched) {
+    return {
+      message: 'O campo "watchedAt" é obrigatório',
+    };
+  }
+  if (!regexData.test(watched)) {
+    return {
+      message: 'O campo "watchedAt" deve ter o formato "dd/mm/aaaa"',
+    };
+  }
+  return true;
+};
+const numberBetween = (num) => {
+  if (!Number.isInteger(num)) return false;
+  if (num === 0 || num < 1 || num > 5) return false;
+  return true;
+};
+const validateRate = (rate) => {
+  const testRate = numberBetween(rate);
+  if (rate === undefined || rate === null) return { message: 'O campo "rate" é obrigatório' };
+  if (!testRate) {
+    return { message: 'O campo "rate" deve ser um número inteiro entre 1 e 5' }; 
+  }
+  return true;
+};
+
+const validateTalk = (req, res, next) => {
+  const { talk } = req.body;
+  if (!('talk' in req.body)) {
+    return res.status(400).json({
+      message: 'O campo "talk" é obrigatório',
+    });
+  }
+  const watched = validateWatchedAt(talk.watchedAt);
+  const rating = validateRate(talk.rate);
+  if (watched !== true) {
+    return res.status(400).json(watched);
+  }
+  if (rating !== true) {
+    return res.status(400).json(rating);
+  }
+  next();
+};
+
+module.exports = {
+  validateName,
+  validateAge,
+  validateTalk,
+};
