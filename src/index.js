@@ -3,11 +3,12 @@ require('express-async-errors');
 
 const talkerRoutes = require('./routes/talkerRoutes');
 const loginRoutes = require('./routes/loginRoutes');
+const { validadeEmail, validatePassword } = require('./middlewares/validatelogin');
 
 const app = express();
 app.use(express.json());
 app.use('/talker', talkerRoutes);
-app.use('/login', loginRoutes);
+app.use('/login', validadeEmail, validatePassword, loginRoutes);
 
 const HTTP_OK_STATUS = 200;
 const PORT = process.env.PORT || '3001';
