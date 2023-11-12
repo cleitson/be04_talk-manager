@@ -13,6 +13,16 @@ router.get('/', async (_request, response) => {
   response.status(200).send(talkers);
 });
 
+router.get('/search', auth, async (request, response) => {
+  const { q } = request.query;
+  const talkers = await readFile();
+  if (q) {
+    const filteredTalkers = talkers.filter((talker) => talker.name.includes(q));
+    return response.status(200).send(filteredTalkers);
+  }
+  return response.status(200).send(talkers);
+});
+
 router.get('/:id', async (request, response) => {
   const { id } = request.params;
   const talkers = await readFile();
