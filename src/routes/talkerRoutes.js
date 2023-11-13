@@ -1,7 +1,11 @@
 const express = require('express');
 const { readFile, writeFile } = require('../utils/manipulateFile');
 const auth = require('../middlewares/auth');
-const { validateName, validateAge, validateTalk } = require('../middlewares/validateTalker');
+const {
+  validateName,
+  validateAge,
+  validateTalk,
+} = require('../middlewares/validateTalker');
 
 const router = express.Router();
 
@@ -14,13 +18,21 @@ router.get('/', async (_request, response) => {
 });
 
 router.get('/search', auth, async (request, response) => {
-  const { q } = request.query;
+  const { q, rate } = request.query;
   const talkers = await readFile();
-  if (q) {
-    const filteredTalkers = talkers.filter((talker) => talker.name.includes(q));
-    return response.status(200).send(filteredTalkers);
-  }
-  return response.status(200).send(talkers);
+  let filteredTalkers = talkers;
+  const regexRate = /^[1-5]$/;
+  const mess = { message: 'O campo "rate" deve ser um número inteiro entre 1 e 5' };
+  const nameFilter = (talker) => talker.name.includes(q);
+  const rateFilter = (talker) => talker.talk.rate === Number(rate);
+  if (q) filteredTalkers = filteredTalkers.filter(nameFilter);
+  if (rate) {
+    if (!regexRate.test(rate)) return response.status(400).send(mess);
+    filteredTalkers = filteredTalkers.filter(rateFilter);
+  } 
+  const result = response.status(200).send(filteredTalkers);
+  const noResult = response.status(200).send([]);
+  return filteredTalkers.length > 0 ? result : noResult;
 });
 
 router.get('/:id', async (request, response) => {
